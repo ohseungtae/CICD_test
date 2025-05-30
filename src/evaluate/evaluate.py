@@ -10,6 +10,8 @@ def evaluate_prophet(model_path, test_csv):
     test_data.columns = ['ds', 'y']
     forecast = model.predict(test_data[['ds']])
     mae = mean_absolute_error(test_data['y'], forecast['yhat'])
-    rmse = mean_squared_error(test_data['y'], forecast['yhat'], squared=False)
+    #rmse = mean_squared_error(test_data['y'], forecast['yhat'], squared=False)
+    # 수정된 코드
+    rmse = np.sqrt(mean_squared_error(test_data['y'], forecast['yhat']))
     ic(mae, rmse)
     return {'mae': mae, 'rmse': rmse}
