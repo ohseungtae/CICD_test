@@ -42,8 +42,12 @@ def test_evaluate_prophet_without_mlflow(mock_prophet_model, temp_test_csv):
     """MLflow 없이 Prophet 모델 평가 테스트"""
     os.environ['ENABLE_MLFLOW'] = 'false'
 
-    with patch('joblib.load', return_value=mock_prophet_model):
-        metrics = evaluate_prophet('/tmp/model.pkl', temp_test_csv, 'mock_run_id')
+    with patch('src.utils.utils.model_dir') as mock_model_dir, \
+            patch('joblib.load', return_value=mock_prophet_model):
+        # 평가 시 사용하는 모델 경로를 mocking
+        mock_model_dir.side_effect = lambda model_name=None: f'/tmp/{model_name}' if model_name else '/tmp'
+
+        metrics = evaluate_prophet('/tmp/prophet_model.pkl', temp_test_csv, 'mock_run_id')
 
         assert 'mae' in metrics
         assert 'rmse' in metrics
@@ -55,11 +59,13 @@ def test_evaluate_sarimax_without_mlflow(temp_test_csv):
     """MLflow 없이 SARIMAX 모델 평가 테스트"""
     os.environ['ENABLE_MLFLOW'] = 'false'
 
-    # SARIMAX 모델 Mock
     mock_sarimax_model = MagicMock()
     mock_sarimax_model.predict.return_value = np.array([15.0, 16.0, 17.0, 18.0, 19.0])
 
-    with patch('joblib.load', return_value=mock_sarimax_model):
+    with patch('src.utils.utils.model_dir') as mock_model_dir, \
+            patch('joblib.load', return_value=mock_sarimax_model):
+        mock_model_dir.side_effect = lambda model_name=None: f'/tmp/{model_name}' if model_name else '/tmp'
+
         metrics = evaluate_sarimax('/tmp/sarimax_model.pkl', temp_test_csv, 'mock_run_id')
 
         assert 'mae' in metrics

@@ -33,9 +33,10 @@ def test_train_prophet_without_mlflow(temp_csv_file):
     with patch('src.utils.utils.model_dir') as mock_model_dir, \
             patch('src.utils.utils.ensure_dir') as mock_ensure_dir, \
             patch('joblib.dump') as mock_dump:
-        mock_model_dir.return_value = '/tmp/test_model.pkl'
+        # side_effect로 함수처럼 동작하게 설정
+        mock_model_dir.side_effect = lambda model_name=None: f'/tmp/{model_name}' if model_name else '/tmp'
 
-        model_path, run_id = train_prophet(temp_csv_file)
+        model_path, run_id = train_prophet(temp_csv_file, model_name='test_model.pkl')
 
         assert model_path == '/tmp/test_model.pkl'
         assert run_id is not None
@@ -49,13 +50,13 @@ def test_train_sarimax_without_mlflow(temp_csv_file):
     with patch('src.utils.utils.model_dir') as mock_model_dir, \
             patch('src.utils.utils.ensure_dir') as mock_ensure_dir, \
             patch('joblib.dump') as mock_dump:
-        mock_model_dir.return_value = '/tmp/test_sarimax_model.pkl'
+        mock_model_dir.side_effect = lambda model_name=None: f'/tmp/{model_name}' if model_name else '/tmp'
 
-        # SARIMAX는 훈련 시간이 오래 걸릴 수 있으므로 간단한 파라미터 사용
         model_path, run_id = train_sarimax(
             temp_csv_file,
             order=(1, 0, 0),
-            seasonal_order=(0, 0, 0, 0)
+            seasonal_order=(0, 0, 0, 0),
+            model_name='test_sarimax_model.pkl'
         )
 
         assert model_path == '/tmp/test_sarimax_model.pkl'
