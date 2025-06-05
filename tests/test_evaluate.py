@@ -1,4 +1,4 @@
-# tests/test_evaluate.py
+# tests/test_evaluate.py - 수정된 테스트 파일
 import pytest
 import pandas as pd
 import numpy as np
@@ -43,9 +43,14 @@ def test_evaluate_prophet_without_mlflow(mock_prophet_model, temp_test_csv):
     os.environ['ENABLE_MLFLOW'] = 'false'
 
     with patch('src.utils.utils.model_dir') as mock_model_dir, \
-            patch('joblib.load', return_value=mock_prophet_model):
-        # 평가 시 사용하는 모델 경로를 mocking
-        mock_model_dir.side_effect = lambda model_name=None: f'/tmp/{model_name}' if model_name else '/tmp'
+            patch('joblib.load', return_value=mock_prophet_model), \
+            patch('mlflow.tracking.MlflowClient') as mock_mlflow_client:
+        # MLflow 관련 모든 호출을 mock 처리
+        mock_client_instance = MagicMock()
+        mock_mlflow_client.return_value = mock_client_instance
+        mock_client_instance.get_run.return_value = MagicMock()
+
+        mock_model_dir.return_value = '/tmp'
 
         metrics = evaluate_prophet('/tmp/prophet_model.pkl', temp_test_csv, 'mock_run_id')
 
@@ -63,8 +68,14 @@ def test_evaluate_sarimax_without_mlflow(temp_test_csv):
     mock_sarimax_model.predict.return_value = np.array([15.0, 16.0, 17.0, 18.0, 19.0])
 
     with patch('src.utils.utils.model_dir') as mock_model_dir, \
-            patch('joblib.load', return_value=mock_sarimax_model):
-        mock_model_dir.side_effect = lambda model_name=None: f'/tmp/{model_name}' if model_name else '/tmp'
+            patch('joblib.load', return_value=mock_sarimax_model), \
+            patch('mlflow.tracking.MlflowClient') as mock_mlflow_client:
+        # MLflow 관련 모든 호출을 mock 처리
+        mock_client_instance = MagicMock()
+        mock_mlflow_client.return_value = mock_client_instance
+        mock_client_instance.get_run.return_value = MagicMock()
+
+        mock_model_dir.return_value = '/tmp'
 
         metrics = evaluate_sarimax('/tmp/sarimax_model.pkl', temp_test_csv, 'mock_run_id')
 

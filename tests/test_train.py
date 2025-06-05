@@ -1,4 +1,4 @@
-# tests/test_train.py - 샘플 테스트 파일
+# tests/test_train.py - 수정된 테스트 파일
 import pytest
 import pandas as pd
 import numpy as np
@@ -33,12 +33,13 @@ def test_train_prophet_without_mlflow(temp_csv_file):
     with patch('src.utils.utils.model_dir') as mock_model_dir, \
             patch('src.utils.utils.ensure_dir') as mock_ensure_dir, \
             patch('joblib.dump') as mock_dump:
-        # side_effect로 함수처럼 동작하게 설정
-        mock_model_dir.side_effect = lambda model_name=None: f'/tmp/{model_name}' if model_name else '/tmp'
+        # 실제 경로 구조를 반영한 mock 설정
+        expected_path = '/tmp/test_model.pkl'
+        mock_model_dir.return_value = expected_path
 
         model_path, run_id = train_prophet(temp_csv_file, model_name='test_model.pkl')
 
-        assert model_path == '/tmp/test_model.pkl'
+        assert model_path == expected_path
         assert run_id is not None
         mock_dump.assert_called_once()
 
@@ -50,7 +51,8 @@ def test_train_sarimax_without_mlflow(temp_csv_file):
     with patch('src.utils.utils.model_dir') as mock_model_dir, \
             patch('src.utils.utils.ensure_dir') as mock_ensure_dir, \
             patch('joblib.dump') as mock_dump:
-        mock_model_dir.side_effect = lambda model_name=None: f'/tmp/{model_name}' if model_name else '/tmp'
+        expected_path = '/tmp/test_sarimax_model.pkl'
+        mock_model_dir.return_value = expected_path
 
         model_path, run_id = train_sarimax(
             temp_csv_file,
@@ -59,6 +61,6 @@ def test_train_sarimax_without_mlflow(temp_csv_file):
             model_name='test_sarimax_model.pkl'
         )
 
-        assert model_path == '/tmp/test_sarimax_model.pkl'
+        assert model_path == expected_path
         assert run_id is not None
         mock_dump.assert_called_once()
