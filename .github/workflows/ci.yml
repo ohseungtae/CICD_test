@@ -1,5 +1,7 @@
 name: CI/CD Pipeline
-
+  env:
+    PYTHONPATH: .
+  run: pytest tests/ -v --cov=src --cov-report=xml
 on:
   push:
     branches: [ main, develop ]
