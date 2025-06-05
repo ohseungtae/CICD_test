@@ -30,10 +30,14 @@ def test_train_prophet_without_mlflow(temp_csv_file):
     """MLflow 없이 Prophet 모델 훈련 테스트"""
     os.environ['ENABLE_MLFLOW'] = 'false'
 
-    with patch('src.utils.utils.model_dir') as mock_model_dir, \
-            patch('src.utils.utils.ensure_dir') as mock_ensure_dir, \
-            patch('joblib.dump') as mock_dump:
-        # 실제 경로 구조를 반영한 mock 설정
+    # train.py에서 import한 model_dir를 직접 패치
+    with patch('src.train.train.model_dir') as mock_model_dir, \
+            patch('src.train.train.ensure_dir') as mock_ensure_dir, \
+            patch('joblib.dump') as mock_dump, \
+            patch('mlflow.start_run'), \
+            patch('mlflow.log_params'), \
+            patch('mlflow.log_artifacts'), \
+            patch('mlflow.end_run'):
         expected_path = '/tmp/test_model.pkl'
         mock_model_dir.return_value = expected_path
 
@@ -48,9 +52,14 @@ def test_train_sarimax_without_mlflow(temp_csv_file):
     """MLflow 없이 SARIMAX 모델 훈련 테스트"""
     os.environ['ENABLE_MLFLOW'] = 'false'
 
-    with patch('src.utils.utils.model_dir') as mock_model_dir, \
-            patch('src.utils.utils.ensure_dir') as mock_ensure_dir, \
-            patch('joblib.dump') as mock_dump:
+    # train.py에서 import한 model_dir를 직접 패치
+    with patch('src.train.train.model_dir') as mock_model_dir, \
+            patch('src.train.train.ensure_dir') as mock_ensure_dir, \
+            patch('joblib.dump') as mock_dump, \
+            patch('mlflow.start_run'), \
+            patch('mlflow.log_params'), \
+            patch('mlflow.log_artifacts'), \
+            patch('mlflow.end_run'):
         expected_path = '/tmp/test_sarimax_model.pkl'
         mock_model_dir.return_value = expected_path
 
