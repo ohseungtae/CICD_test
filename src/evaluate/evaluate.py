@@ -44,7 +44,7 @@ def evaluate_sarimax(model_path, test_csv, run_id):
     y_pred = model.predict(start=start, end=end)
 
     mae = mean_absolute_error(y_true, y_pred)
-    rmse = mean_squared_error(y_true, y_pred, squared=False)
+    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
     ic(mae, rmse)
 
     # MLflow 로깅 (CI 환경에서는 건너뛰기)
