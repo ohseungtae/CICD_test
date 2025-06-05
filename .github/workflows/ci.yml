@@ -330,7 +330,7 @@ jobs:
         cp config.yaml deployment/ || echo "config.yaml not found, skipping"
 
     - name: Archive deployment artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: deployment-package
         path: deployment/
