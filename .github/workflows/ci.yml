@@ -95,14 +95,18 @@ jobs:
       run: |
         echo "ENABLE_MLFLOW=false" >> $GITHUB_ENV
         echo "CI=true" >> $GITHUB_ENV
+        echo "PYTHONPATH=." >> $GITHUB_ENV
 
-    - name: Run integration tests (Mock data)
+    - name: Generate test data
       run: |
-        # Prophet 모델로 간단한 파이프라인 테스트
         python -c "
         import pandas as pd
         import numpy as np
         from datetime import datetime, timedelta
+        import os
+        
+        # 프로젝트 루트에서 상대 경로로 데이터 디렉토리 생성
+        os.makedirs('data/dataset', exist_ok=True)
         
         # 테스트 데이터 생성
         dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='H')
@@ -119,46 +123,107 @@ jobs:
         test_data_split.to_csv('data/dataset/test_data.csv', index=False)
         
         print('Test data created successfully')
+        print(f'Train data shape: {train_data.shape}')
+        print(f'Test data shape: {test_data_split.shape}')
         "
 
     - name: Test Prophet training
       run: |
         python -c "
-        from src.train.train import train_prophet
+        import sys
         import os
+        sys.path.insert(0, '.')
         os.environ['ENABLE_MLFLOW'] = 'false'
         
+        from src.train.train import train_prophet
+        
+        print('Starting Prophet model training...')
         model_path, run_id = train_prophet('data/dataset/train_data.csv')
         print(f'Model trained successfully: {model_path}')
         print(f'Run ID: {run_id}')
+        
+        # 모델 파일이 실제로 생성되었는지 확인
+        if os.path.exists(model_path):
+            print(f'Model file confirmed at: {model_path}')
+            print(f'File size: {os.path.getsize(model_path)} bytes')
+        else:
+            print(f'WARNING: Model file not found at {model_path}')
+            # 모델 디렉토리 내용 확인
+            import glob
+            models_dir = os.path.dirname(model_path)
+            if os.path.exists(models_dir):
+                files = glob.glob(os.path.join(models_dir, '*'))
+                print(f'Files in models directory: {files}')
+            else:
+                print(f'Models directory does not exist: {models_dir}')
         "
 
     - name: Test Prophet evaluation
       run: |
         python -c "
-        from src.evaluate.evaluate import evaluate_prophet
+        import sys
         import os
+        sys.path.insert(0, '.')
         os.environ['ENABLE_MLFLOW'] = 'false'
         
-        metrics = evaluate_prophet('data/models/prophet_model.pkl', 'data/dataset/test_data.csv', 'mock_run_id')
+        from src.evaluate.evaluate import evaluate_prophet
+        from src.utils.utils import model_dir
+        
+        print('Starting Prophet model evaluation...')
+        
+        # 모델 경로를 utils 함수를 사용해서 가져오기
+        model_path = model_dir('prophet_model.pkl')
+        print(f'Looking for model at: {model_path}')
+        
+        if not os.path.exists(model_path):
+            print(f'ERROR: Model file not found at {model_path}')
+            # 디버깅을 위해 현재 디렉토리 구조 출력
+            import glob
+            print('Current working directory:', os.getcwd())
+            print('All pkl files in project:')
+            for pkl_file in glob.glob('**/*.pkl', recursive=True):
+                print(f'  - {pkl_file}')
+            sys.exit(1)
+        
+        metrics = evaluate_prophet(model_path, 'data/dataset/test_data.csv', 'mock_run_id')
         print(f'Evaluation completed: MAE={metrics[\"mae\"]:.2f}, RMSE={metrics[\"rmse\"]:.2f}')
         "
 
     - name: Test Future prediction
       run: |
         python -c "
-        from src.test.test import predict_future
-        import pandas as pd
-        import joblib
+        import sys  
         import os
+        sys.path.insert(0, '.')
         os.environ['ENABLE_MLFLOW'] = 'false'
         
-        model = joblib.load('data/models/prophet_model.pkl')
+        from src.test.test import predict_future
+        from src.utils.utils import model_dir
+        import pandas as pd
+        import joblib
+        
+        print('Starting future prediction test...')
+        
+        # 모델 경로를 utils 함수를 사용해서 가져오기
+        model_path = model_dir('prophet_model.pkl')
+        print(f'Loading model from: {model_path}')
+        
+        model = joblib.load(model_path)
         test_data = pd.read_csv('data/dataset/test_data.csv', parse_dates=['time'])
         last_date = test_data['time'].max()
         
+        print(f'Last date in test data: {last_date}')
+        print('Generating 3-day forecast...')
+        
         future_csv = predict_future(model, last_date, days=3, save_name='test_forecast.csv')
         print(f'Future prediction completed: {future_csv}')
+        
+        # 예측 결과 확인
+        if os.path.exists(future_csv):
+            forecast_df = pd.read_csv(future_csv)
+            print(f'Forecast data shape: {forecast_df.shape}')
+            print('First few predictions:')
+            print(forecast_df.head())
         "
 
   # Deploy job - main 브랜치 push에서만 실행
