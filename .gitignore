@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+coverage.xml
+.pytest_cache/
+htmlcov/
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Data
+data/dataset/*.csv
+data/models/*.pkl
+data/results/*.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

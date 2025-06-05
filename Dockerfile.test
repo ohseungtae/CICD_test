@@ -1,0 +1,25 @@
+# Dockerfile.test - 테스트용 Docker 파일
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# 시스템 패키지 설치
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python 패키지 설치
+COPY requirements.txt test_requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r test_requirements.txt
+
+# 애플리케이션 코드 복사
+COPY . .
+
+# 테스트 환경 변수 설정
+ENV ENABLE_MLFLOW=false
+ENV CI=true
+
+# 테스트 실행
+CMD ["pytest", "tests/", "-v", "--cov=src", "--cov-report=xml"]
