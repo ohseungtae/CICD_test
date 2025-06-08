@@ -8,7 +8,7 @@ on:
 env:
   ENABLE_MLFLOW: false
   CI: true
-#.
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -107,7 +107,7 @@ jobs:
         os.makedirs('dataset', exist_ok=True)
         
         # 테스트 데이터 생성
-        dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='H')
+        dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='h')
         temps = 15 + 10 * np.sin(2 * np.pi * np.arange(len(dates)) / (24*365)) + np.random.normal(0, 2, len(dates))
         test_data = pd.DataFrame({'time': dates, 'temp': temps})
         test_data.to_csv('dataset/test_weather.csv', index=False)
